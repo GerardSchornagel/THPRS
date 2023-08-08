@@ -28,12 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMain));
             this.statusBar = new System.Windows.Forms.StatusStrip();
+            this.statusConnection = new System.Windows.Forms.ToolStripStatusLabel();
             this.statusProgress = new System.Windows.Forms.ToolStripProgressBar();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.statusConnection = new System.Windows.Forms.ToolStripStatusLabel();
             this.btnConnect = new System.Windows.Forms.Button();
+            this.tmrRefreshToken = new System.Windows.Forms.Timer(this.components);
             this.statusBar.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -45,9 +47,17 @@
             this.statusLabel});
             this.statusBar.Location = new System.Drawing.Point(0, 516);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(1160, 22);
+            this.statusBar.Size = new System.Drawing.Size(666, 22);
             this.statusBar.TabIndex = 0;
             this.statusBar.Text = "Statusbar";
+            // 
+            // statusConnection
+            // 
+            this.statusConnection.ForeColor = System.Drawing.Color.Red;
+            this.statusConnection.Name = "statusConnection";
+            this.statusConnection.Size = new System.Drawing.Size(79, 17);
+            this.statusConnection.Text = "Disconnected";
+            this.statusConnection.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // statusProgress
             // 
@@ -60,14 +70,6 @@
             this.statusLabel.Size = new System.Drawing.Size(12, 17);
             this.statusLabel.Text = "*";
             // 
-            // statusConnection
-            // 
-            this.statusConnection.ForeColor = System.Drawing.Color.Red;
-            this.statusConnection.Name = "statusConnection";
-            this.statusConnection.Size = new System.Drawing.Size(79, 17);
-            this.statusConnection.Text = "Disconnected";
-            this.statusConnection.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
             // btnConnect
             // 
             this.btnConnect.Location = new System.Drawing.Point(12, 12);
@@ -78,11 +80,15 @@
             this.btnConnect.UseVisualStyleBackColor = true;
             this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
             // 
+            // tmrRefreshToken
+            // 
+            this.tmrRefreshToken.Tick += new System.EventHandler(this.tmrRefreshToken_Tick);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1160, 538);
+            this.ClientSize = new System.Drawing.Size(666, 538);
             this.Controls.Add(this.btnConnect);
             this.Controls.Add(this.statusBar);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -102,6 +108,7 @@
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
         private System.Windows.Forms.ToolStripStatusLabel statusConnection;
         private System.Windows.Forms.Button btnConnect;
+        private System.Windows.Forms.Timer tmrRefreshToken;
     }
 }
 

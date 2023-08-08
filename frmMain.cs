@@ -100,7 +100,14 @@ namespace THPRS
             if (config.InternetAvailability == false) { MessageBox.Show("Click OK to retry getting internet access. Make sure your firewall is configured correctly."); checkInternetAvailability(); }
 
             Connection.connectTwitch(statusLabel, statusProgress, statusConnection);
+            tmrRefreshToken.Interval = int.Parse(Connection.tokenExpiresIn) - 100;
+            tmrRefreshToken.Enabled = true;
+        }
 
+        private void tmrRefreshToken_Tick(object sender, EventArgs e)
+        {
+            Connection.oauthRefreshRequest(statusLabel, statusProgress, statusConnection);
+            tmrRefreshToken.Interval = int.Parse(Connection.tokenExpiresIn) - 100;
         }
     }
 }

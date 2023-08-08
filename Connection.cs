@@ -23,7 +23,7 @@ namespace THPRS
         private static string tokenEndpoint = "https://id.twitch.tv/oauth2/token";
         private static string tokenCode = "";
         private static string tokenRefresh = "";
-        private static string tokenExpiresIn = "";
+        public static string tokenExpiresIn = "";
         private static string tokenType = "";
 
         public static void connectTwitch(ToolStripStatusLabel progressText, ToolStripProgressBar progressValue, ToolStripStatusLabel progressConnection)
@@ -199,18 +199,84 @@ namespace THPRS
                     dictX.TryGetValue("refresh_token", out tokenRefresh);
                     dictX.TryGetValue("scope", out authorizationScope);
                     dictX.TryGetValue("token_type", out tokenType);
-                    progressText.Text = "Connecting to Twitch; SUCCES";
+                    progressText.Text = "Connecting to Twitch; SUCCES; refresh_in=" + tokenExpiresIn + " refresh_token=" + tokenRefresh;
                     progressValue.Value = 100;
                     break;
-                }
-                else
-                {
-                    progressText.Text = "Connecting to Twitch; Token Request; Await token-response FAIL";
-                    MessageBox.Show("Please check firewall for inbound restrictions on program and try again.");
                 }
             }
         }
 
+        public static void oauthRefreshRequest(ToolStripStatusLabel progressText, ToolStripProgressBar progressValue, ToolStripStatusLabel progressConnection)
+        {
+            progressValue.Value = 0;
+            progressConnection.Text = "Refreshing";
+            progressConnection.ForeColor = System.Drawing.Color.Yellow;
 
+            progressText.Text = "Refresh Token; Building Request";
+            progressValue.Value = 10;
+            var queryDict = new Dictionary<string, string>{
+    {"client_id", clientId},
+    {"client_secret", clientSecret},
+    {"grant_type", "refresh_token"},
+    {"refresh_token", tokenRefresh} };
+            progressText.Text = "Refresh Token; Building Request";
+            progressValue.Value = 30;
+            var httpClient = new HttpClient();
+            var requestContent = new FormUrlEncodedContent(queryDict);
+
+            progressText.Text = "Refresh Token; Send request";
+            progressValue.Value = 60;
+            // Sending request
+            var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint) { Content = requestContent };
+
+            progressText.Text = "Refresh Token; Await token-response";
+            progressValue.Value = 80;
+            // Awaiting response
+            var response = httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+            while (true)
+            {
+                if (response.Result.Content.Headers.ContentLength != null)
+                {
+                    progressText.Text = "Refresh Token; token-response; Formatting Response";
+                    progressValue.Value = 90;
+
+                    // Parse Response to Dictonary
+                    var responseContent = response.Result.Content.ReadAsStringAsync().Result;
+
+                    responseContent = responseContent.ToString().Remove(0, 2);
+                    responseContent = responseContent.Remove(responseContent.Length - 3, 3);
+                    responseContent = responseContent.Replace("\\", "");
+                    responseContent = responseContent.Replace("\"", "");
+                    responseContent = responseContent.Replace("[", "");
+                    responseContent = responseContent.Replace("]", "");
+                    responseContent = responseContent.Replace("it,ch", "it+ch");
+                    responseContent = responseContent.Replace("chat:", "chat=");
+
+                    var arrayX = responseContent.Split(',');
+                    var dictX = new Dictionary<string, string>();
+                    foreach (var x in arrayX)
+                    {
+                        // Foreach "," Dictonary <string:string>.Add
+                        dictX.Add(x.Split(':')[0], x.Split(':')[1].TrimStart(':'));
+                    }
+                    //Fix scope
+                    authorizationScope.Replace('=', ':');
+                    authorizationScope.Replace("+", " ");
+
+                    // Check for validity and parse to variables
+                    dictX.TryGetValue("access_token", out tokenCode);
+                    dictX.TryGetValue("refresh_token", out tokenRefresh);
+                    dictX.TryGetValue("scope", out authorizationScope);
+                    dictX.TryGetValue("token_type", out tokenType);
+
+                    progressText.Text = "Refresh Token; SUCCES";
+                    progressValue.Value = 100;
+                    progressConnection.Text = "Connected";
+                    progressConnection.ForeColor = System.Drawing.Color.Green;
+                    break;
+                }
+            }
+        }
     }
 }
