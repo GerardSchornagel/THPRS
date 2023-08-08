@@ -94,5 +94,13 @@ namespace THPRS
                 }
             }
         }
+
+        private void btnConnect_Click(object sender, EventArgs e)
+        {
+            if (config.InternetAvailability == false) { MessageBox.Show("Click OK to retry getting internet access. Make sure your firewall is configured correctly."); checkInternetAvailability(); }
+
+            Connection.connectTwitch(statusLabel, statusProgress, statusConnection);
+
+        }
     }
 }
