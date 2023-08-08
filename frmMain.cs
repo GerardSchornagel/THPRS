@@ -22,6 +22,9 @@ namespace THPRS
         {
             InitializeComponent();
 
+            statusProgress.Value = 0;
+            statusLabel.Text = "Check for config.json";
+
             // Check config.json existence and create if missing, then read to memory.
             if (System.IO.File.Exists("config.json") == false)
             {
@@ -29,54 +32,65 @@ namespace THPRS
                 {
                     InternetAvailability = false
                 };
+
+                statusProgress.Value = 33;
+                statusLabel.Text = "Creating ../config.json";
                 ConfigurationManager.WriteConfiguration(config);
             }
+            statusProgress.Value = 66;
+            statusLabel.Text = "Reading config.json";
+
             config = ConfigurationManager.ReadConfiguration();
 
+            statusProgress.Value = 100;
+            statusLabel.Text = "Configuration file loaded";
             if (config.InternetAvailability == false) { checkInternetAvailability(); }
         }
-
 
         public void checkInternetAvailability()
         {
             bool isNetworkAvailable = NetworkInterface.GetIsNetworkAvailable();
             bool isInternetAvailable = false;
-            Dictionary<string, string> errorMessages = new Dictionary<string, string>
-            {
-                { "NetworkUnavailable", "Network connection is not available." },
-                { "InternetUnavailable", "Internet connection is not available." },
-                { "PingException", "An error occurred while trying to check internet availability." }
-            };
 
+            statusProgress.Value = 0;
+            statusLabel.Text = "Testing network connection";
             if (!isNetworkAvailable)
             {
-                string errorMessage = errorMessages["NetworkUnavailable"];
-                MessageBox.Show(errorMessage);
+                statusLabel.Text = "Network connection error";
+
+                MessageBox.Show("Network connection is not available.");
             }
             else
             {
+                statusProgress.Value = 33;
+                statusLabel.Text = "Pinging 8.8.8.8";
                 using (Ping ping = new Ping())
                 {
                     try
                     {
-                        PingReply reply = ping.Send("8.8.8.8"); // Google's DNS server
+                        PingReply reply = ping.Send("8.8.8.8");
                         isInternetAvailable = (reply.Status == IPStatus.Success);
                     }
                     catch (PingException)
                     {
-                        string errorMessage = errorMessages["PingException"];
-                        MessageBox.Show(errorMessage);
+                        statusLabel.Text = "Ping to Google DNS failed";
+                        MessageBox.Show("An error occurred while trying to check internet availability.");
                     }
                 }
 
+                statusProgress.Value = 66;
+                statusLabel.Text = "Testing internet connection";
                 if (!isInternetAvailable)
                 {
-                    string errorMessage = errorMessages["InternetUnavailable"];
-                    MessageBox.Show(errorMessage);
+                    statusLabel.Text = "Internet connection error";
+
+                    MessageBox.Show("Internet connection is not available.");
                 }
                 else
                 {
                     config.InternetAvailability = true;
+                    statusProgress.Value = 100;
+                    statusLabel.Text = "Internet access detected";
                 }
             }
         }
