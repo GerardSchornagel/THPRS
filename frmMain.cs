@@ -16,7 +16,8 @@ namespace THPRS
 {
     public partial class frmMain : Form
     {
-        internal Configuration config;
+        internal static Configuration config;
+        internal static Connection connect = new Connection();
 
         public frmMain()
         {
@@ -24,22 +25,18 @@ namespace THPRS
 
             statusProgress.Value = 0;
             statusLabel.Text = "Check for config.json";
-
             // Check config.json existence and create if missing, then read to memory.
             if (System.IO.File.Exists("config.json") == false)
             {
-                config = new Configuration
-                {
-                    InternetAvailability = false
-                };
+                config = ConfigurationManager.CreateConfiguration();
 
                 statusProgress.Value = 33;
                 statusLabel.Text = "Creating ../config.json";
                 ConfigurationManager.WriteConfiguration(config);
             }
+
             statusProgress.Value = 66;
             statusLabel.Text = "Reading config.json";
-
             config = ConfigurationManager.ReadConfiguration();
 
             statusProgress.Value = 100;
@@ -95,19 +92,92 @@ namespace THPRS
             }
         }
 
-        private void btnConnect_Click(object sender, EventArgs e)
+        private void tmrRefreshToken_Tick(object sender, EventArgs e)
+        {
+            ConnectionManager.oauthRefreshRequest(config, connect, statusLabel, statusProgress, statusConnection);
+            tmrRefreshToken.Interval = (int.Parse(connect.tokenExpiresIn) * 1000) - 1000;
+        }
+
+        private void menuFileConnect_Click(object sender, EventArgs e)
         {
             if (config.InternetAvailability == false) { MessageBox.Show("Click OK to retry getting internet access. Make sure your firewall is configured correctly."); checkInternetAvailability(); }
 
-            Connection.connectTwitch(statusLabel, statusProgress, statusConnection);
-            tmrRefreshToken.Interval = int.Parse(Connection.tokenExpiresIn) - 100;
+            statusConnection.Text = "Disconnected";
+            statusConnection.ForeColor = System.Drawing.Color.Red;
+
+            statusLabel.Text = "Connecting to Twitch; Authorization Request";
+            statusProgress.Value = 0;
+            ConnectionManager.oauthAuthorizationRequest(config, connect, statusLabel, statusProgress);
+
+            statusLabel.Text = "Connecting to Twitch; Token Request";
+            ConnectionManager.oauthTokenRequest(config, connect, statusLabel, statusProgress);
+
+            statusConnection.Text = "Connected";
+            statusConnection.ForeColor = System.Drawing.Color.Green;
+
+            tmrRefreshToken.Interval = (int.Parse(connect.tokenExpiresIn) * 1000) - 1000;
             tmrRefreshToken.Enabled = true;
         }
 
-        private void tmrRefreshToken_Tick(object sender, EventArgs e)
+        private void menuOptionsSettings_Click(object sender, EventArgs e)
         {
-            Connection.oauthRefreshRequest(statusLabel, statusProgress, statusConnection);
-            tmrRefreshToken.Interval = int.Parse(Connection.tokenExpiresIn) - 100;
+            frmSettings frmSettings = new frmSettings(config);
+            frmSettings.ShowDialog();
+        }
+
+        private void menuFileExit_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void menuFileDefault_Click(object sender, EventArgs e)
+        {
+            statusProgress.Value = 0;
+            statusLabel.Text = "Loading Default Profile";
+            config = ConfigurationManager.CreateConfiguration();
+
+            statusProgress.Value = 33;
+            statusLabel.Text = "Creating ../config.json";
+            ConfigurationManager.WriteConfiguration(config);
+
+            statusProgress.Value = 66;
+            statusLabel.Text = "Reading config.json";
+            config = ConfigurationManager.ReadConfiguration();
+
+            statusProgress.Value = 100;
+            statusLabel.Text = "Default Profile Applied";
+
+            checkInternetAvailability();
+        }
+
+        private void menuFileExport_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog exportFile = new SaveFileDialog();
+            exportFile.Filter = "THPRS file|*.profile";
+            exportFile.AddExtension = true;
+            exportFile.DefaultExt = exportFile.Filter;
+            exportFile.OverwritePrompt = true;
+            exportFile.Title = "Export Profile...";
+            exportFile.ShowDialog();
+
+            ConfigurationManager.WriteConfiguration(config, exportFile.FileName);
+        }
+
+        private void menuFileImport_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog importFile = new OpenFileDialog();
+            importFile.Filter = "THPRS file|*.profile";
+            importFile.DefaultExt = importFile.Filter;
+            importFile.Title = "Import Profile...";
+            importFile.ShowDialog();
+
+            Configuration configImport;
+            configImport = ConfigurationManager.ReadConfiguration(importFile.FileName);
+            if (configImport != null)
+            {
+                config = configImport;
+                ConfigurationManager.WriteConfiguration(config);
+            }
         }
     }
 }

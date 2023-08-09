@@ -1,47 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
 using System.Net;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace THPRS
 {
-    class Connection
+    class ConnectionManager
     {
-        private static string clientId = "a1dfrppzjrula2poe9sthth3uwae8c";
-        private static string clientSecret = "8embxdsxu4mvey92hd5815zyql8vq3";
-        private static string redirectUri = "http://localhost:3000";
-        private static string authorizationEndpoint = "https://id.twitch.tv/oauth2/authorize";
-        private static string authorizationCode = "";
-        private static string authorizationScope = "chat:read chat:edit";
-        private static string oauthState = "";
-        private static string tokenEndpoint = "https://id.twitch.tv/oauth2/token";
-        private static string tokenCode = "";
-        private static string tokenRefresh = "";
-        public static string tokenExpiresIn = "";
-        private static string tokenType = "";
-
-        public static void connectTwitch(ToolStripStatusLabel progressText, ToolStripProgressBar progressValue, ToolStripStatusLabel progressConnection)
-        {
-            progressConnection.Text = "Disconnected";
-            progressConnection.ForeColor = System.Drawing.Color.Red;
-
-            progressText.Text = "Connecting to Twitch; Authorization Request";
-            progressValue.Value = 0;
-            oauthAuthorizationRequest(progressText, progressValue);
-
-            progressText.Text = "Connecting to Twitch; Token Request";
-            oauthTokenRequest(progressText, progressValue);
-
-            progressConnection.Text = "Connected";
-            progressConnection.ForeColor = System.Drawing.Color.Green;
-        }
-
         static string generateRandomHexCode()
         {
             var random = new Random();
@@ -56,21 +23,29 @@ namespace THPRS
             return new string(hexCode);
         }
 
-        static void oauthAuthorizationRequest(ToolStripStatusLabel progressText, ToolStripProgressBar progressValue)
+        public static void oauthAuthorizationRequest(Configuration config, Connection connect, ToolStripStatusLabel progressText, ToolStripProgressBar progressValue)
         {
-            oauthState = generateRandomHexCode();
+            string scope = "";
+            if (config.ScopeChannelModerator == true) { scope += "channel:moderator "; }
+            if (config.ScopeChatEdit == true) { scope += "chat:edit "; }
+            if (config.ScopeChatRead == true) { scope += "chat:read "; }
+            if (config.ScopeModeratorReadChatters == true) { scope += "moderator:read:chatters "; }
+            scope = scope.TrimEnd();
+
+            connect.oauthState = generateRandomHexCode();
+            string authorizationCode;
 
             progressText.Text = "Connecting to Twitch; Authorization Request; Building URI";
             progressValue.Value = 8;
             // Build the URL for an OAuth AUTHorization Token
             var dictAuthorization = new Dictionary<string, string> {
-    {"client_id", clientId},
-    {"redirect_uri", redirectUri},
+    {"client_id", config.ClientID},
+    {"redirect_uri", config.RedirectUri},
     {"response_type", "code"},
-    {"scope", authorizationScope},
-    {"state", oauthState } };
+    {"scope", scope},
+    {"state", connect.oauthState } };
             var requestQuery = new FormUrlEncodedContent(dictAuthorization);
-            var uriBuilder = new UriBuilder(authorizationEndpoint);
+            var uriBuilder = new UriBuilder(config.AuthorizationEndpoint);
             uriBuilder.Query = requestQuery.ReadAsStringAsync().Result.ToString();
             string stringAuthorizationURL = uriBuilder.Uri.AbsoluteUri;
 
@@ -78,7 +53,7 @@ namespace THPRS
             progressValue.Value = 16;
             // Opens Listener for localhost for redirects
             var listener = new HttpListener();
-            listener.Prefixes.Add(redirectUri + "/");
+            listener.Prefixes.Add(config.RedirectUri + "/");
             listener.Start();
 
             progressText.Text = "Connecting to Twitch; Authorization Request; Opening URL in browser";
@@ -90,7 +65,7 @@ namespace THPRS
             {
                 HttpListenerContext ctx = listener.GetContext();
                 // Check for redirection to localhost
-                if (ctx.Request.Url.ToString().StartsWith(redirectUri))
+                if (ctx.Request.Url.ToString().StartsWith(config.RedirectUri))
                 {
                     listener.Close();
                     progressText.Text = "Connecting to Twitch; Authorization Request; Response received";
@@ -113,13 +88,13 @@ namespace THPRS
                     string valueState = "";
                     if (dictX.TryGetValue("state", out valueState))
                     {
-                        if (valueState == oauthState)
+                        if (valueState == connect.oauthState)
                         {
                             //Valid response > process
                             //code scope state
                             dictX.TryGetValue("code", out authorizationCode);
-                            dictX.TryGetValue("scope", out authorizationScope);
 
+                            connect.authorizationCode = authorizationCode;
                             progressText.Text = "Connecting to Twitch; Authorization Request; Valid response";
                             progressValue.Value = 42;
                         }
@@ -127,7 +102,7 @@ namespace THPRS
                         {
                             //Mismatched or missing oauthState > Try Again
                             MessageBox.Show("oauth respnose is not valid, wrong or missing State.");
-                            MessageBox.Show(valueState + " != " + oauthState);
+                            MessageBox.Show(valueState + " != " + connect.oauthState);
 
                             progressText.Text = "Connecting to Twitch; Authorization Request; Unvalid Response";
                             progressValue.Value = 42;
@@ -138,17 +113,21 @@ namespace THPRS
             }
         }
 
-        static void oauthTokenRequest(ToolStripStatusLabel progressText, ToolStripProgressBar progressValue)
+        public static void oauthTokenRequest(Configuration config, Connection connect, ToolStripStatusLabel progressText, ToolStripProgressBar progressValue)
         {
+            string tokenCode;
+            string tokenRefresh;
+            string tokenExpiresIn;
+
             progressText.Text = "Connecting to Twitch; Token Request; Building URI";
             progressValue.Value = 60;
             // Build the URL for an OAuth ACCESS Token and send
 
             var queryDict = new Dictionary<string, string>{
-    {"client_id", clientId},
-    {"client_secret", clientSecret},
-    {"redirect_uri", redirectUri},
-    {"code", authorizationCode},
+    {"client_id", config.ClientID},
+    {"client_secret", config.ClientSecret},
+    {"redirect_uri", config.RedirectUri},
+    {"code", connect.authorizationCode},
     {"grant_type", "authorization_code"} };
             var httpClient = new HttpClient();
             var requestContent = new FormUrlEncodedContent(queryDict);
@@ -156,7 +135,7 @@ namespace THPRS
             progressText.Text = "Connecting to Twitch; Token Request; Send request";
             progressValue.Value = 70;
             // Sending request
-            var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint) { Content = requestContent };
+            var request = new HttpRequestMessage(HttpMethod.Post, config.TokenEndpoint) { Content = requestContent };
 
             progressText.Text = "Connecting to Twitch; Token Request; Await token-response";
             progressValue.Value = 80;
@@ -181,6 +160,10 @@ namespace THPRS
                     responseContent = responseContent.Replace("]", "");
                     responseContent = responseContent.Replace("it,ch", "it+ch");
                     responseContent = responseContent.Replace("chat:", "chat=");
+                    responseContent = responseContent.Replace("channel:", "channel=");
+                    responseContent = responseContent.Replace("moderator:", "moderator=");
+                    responseContent = responseContent.Replace("read:", "read=");
+
 
                     var arrayX = responseContent.Split(',');
                     var dictX = new Dictionary<string, string>();
@@ -189,16 +172,16 @@ namespace THPRS
                         // Foreach "," Dictonary <string:string>.Add
                         dictX.Add(x.Split(':')[0], x.Split(':')[1].TrimStart(':'));
                     }
-                    //Fix scope
-                    authorizationScope.Replace('=', ':');
-                    authorizationScope.Replace("+", " ");
 
                     // Check for validity and parse to variables
                     dictX.TryGetValue("access_token", out tokenCode);
                     dictX.TryGetValue("expires_in", out tokenExpiresIn);
                     dictX.TryGetValue("refresh_token", out tokenRefresh);
-                    dictX.TryGetValue("scope", out authorizationScope);
-                    dictX.TryGetValue("token_type", out tokenType);
+
+                    connect.tokenCode = tokenCode;
+                    connect.tokenExpiresIn = tokenExpiresIn;
+                    connect.tokenRefresh = tokenRefresh;
+
                     progressText.Text = "Connecting to Twitch; SUCCES; refresh_in=" + tokenExpiresIn + " refresh_token=" + tokenRefresh;
                     progressValue.Value = 100;
                     break;
@@ -206,8 +189,11 @@ namespace THPRS
             }
         }
 
-        public static void oauthRefreshRequest(ToolStripStatusLabel progressText, ToolStripProgressBar progressValue, ToolStripStatusLabel progressConnection)
+        public static void oauthRefreshRequest(Configuration config, Connection connect ,ToolStripStatusLabel progressText, ToolStripProgressBar progressValue, ToolStripStatusLabel progressConnection)
         {
+            string tokenCode;
+            string tokenRefresh;
+
             progressValue.Value = 0;
             progressConnection.Text = "Refreshing";
             progressConnection.ForeColor = System.Drawing.Color.Yellow;
@@ -215,10 +201,10 @@ namespace THPRS
             progressText.Text = "Refresh Token; Building Request";
             progressValue.Value = 10;
             var queryDict = new Dictionary<string, string>{
-    {"client_id", clientId},
-    {"client_secret", clientSecret},
+    {"client_id", config.ClientID},
+    {"client_secret", config.ClientSecret},
     {"grant_type", "refresh_token"},
-    {"refresh_token", tokenRefresh} };
+    {"refresh_token", connect.tokenRefresh} };
             progressText.Text = "Refresh Token; Building Request";
             progressValue.Value = 30;
             var httpClient = new HttpClient();
@@ -227,7 +213,7 @@ namespace THPRS
             progressText.Text = "Refresh Token; Send request";
             progressValue.Value = 60;
             // Sending request
-            var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint) { Content = requestContent };
+            var request = new HttpRequestMessage(HttpMethod.Post, config.TokenEndpoint) { Content = requestContent };
 
             progressText.Text = "Refresh Token; Await token-response";
             progressValue.Value = 80;
@@ -260,15 +246,13 @@ namespace THPRS
                         // Foreach "," Dictonary <string:string>.Add
                         dictX.Add(x.Split(':')[0], x.Split(':')[1].TrimStart(':'));
                     }
-                    //Fix scope
-                    authorizationScope.Replace('=', ':');
-                    authorizationScope.Replace("+", " ");
 
                     // Check for validity and parse to variables
                     dictX.TryGetValue("access_token", out tokenCode);
                     dictX.TryGetValue("refresh_token", out tokenRefresh);
-                    dictX.TryGetValue("scope", out authorizationScope);
-                    dictX.TryGetValue("token_type", out tokenType);
+
+                    connect.tokenCode = tokenCode;
+                    connect.tokenRefresh = tokenRefresh;
 
                     progressText.Text = "Refresh Token; SUCCES";
                     progressValue.Value = 100;
@@ -279,4 +263,14 @@ namespace THPRS
             }
         }
     }
+}
+
+class Connection
+{
+    public string authorizationCode { get; set; }
+    public string oauthState { get; set; }
+    public string tokenCode { get; set; }
+    public string tokenRefresh { get; set; }
+    public string tokenExpiresIn { get; set; }
+    public string tokenType { get; set; }
 }
