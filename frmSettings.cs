@@ -21,54 +21,64 @@ namespace THPRS
             this.configSettings = configSettings;
         }
 
-        private void frmSettings_Load(object sender, EventArgs e)
+        private void FrmSettings_Load(object sender, EventArgs e)
         {
-            txtboxClientID.Text = configSettings.ClientID;
-            txtboxClientSecret.Text = configSettings.ClientSecret;
-            txtboxRedirectURL.Text = configSettings.RedirectUri;
-            txtboxAuthorisationEndpoint.Text = configSettings.AuthorizationEndpoint;
-            txtboxTokenEndpoint.Text = configSettings.TokenEndpoint;
-            chkScopesChannelModerate.Checked = configSettings.ScopeChannelModerator;
-            chkScopesChatEdit.Checked = configSettings.ScopeChatEdit;
-            chkScopesChatRead.Checked = configSettings.ScopeChatRead;
-            chkScopesModeratorReadChatters.Checked = configSettings.ScopeModeratorReadChatters;
+            txtboxOAthClientID.Text = configSettings.OAuthClientID;
+            txtboxOAuthSecret.Text = configSettings.OAuthClientSecret;
+            txtboxOAuthRedirectURL.Text = configSettings.OAuthRedirectUri;
+            txtboxOAuthAuthorisationEndpoint.Text = configSettings.OAuthAuthorizationEndpoint;
+            txtboxOAuthTokenEndpoint.Text = configSettings.OAuthTokenEndpoint;
+            chkOAuthScopeChannelModerate.Checked = configSettings.OAuthScopeChannelModerator;
+            chkOAuthScopeChatEdit.Checked = configSettings.OAuthScopeChatEdit;
+            chkOAuthScopeChatRead.Checked = configSettings.OAuthScopeChatRead;
+            chkOAuthScopeModeratorReadChatters.Checked = configSettings.OAuthScopeModeratorReadChatters;
+            txtboxIRCIP.Text = configSettings.IRCIP;
+            txtboxIRCHost.Text = configSettings.IRCHost;
+            txtboxIRCPort.Text = configSettings.IRCPort.ToString();
+            txtboxIRCNick.Text = configSettings.IRCNick;
+            txtboxIRCChannel.Text = configSettings.IRCChannel;
         }
 
-        private void btnHideClientID_Click(object sender, EventArgs e)
+        private void BtnHideClientID_Click(object sender, EventArgs e)
         {
-            txtboxClientID.UseSystemPasswordChar = !txtboxClientID.UseSystemPasswordChar;
-            txtboxClientID.ReadOnly = !txtboxClientID.ReadOnly;
+            txtboxOAthClientID.UseSystemPasswordChar = !txtboxOAthClientID.UseSystemPasswordChar;
+            txtboxOAthClientID.ReadOnly = !txtboxOAthClientID.ReadOnly;
         }
 
-        private void btnHideClientSecret_Click(object sender, EventArgs e)
+        private void BtnHideClientSecret_Click(object sender, EventArgs e)
         {
-            txtboxClientSecret.UseSystemPasswordChar = !txtboxClientSecret.UseSystemPasswordChar;
-            txtboxClientSecret.ReadOnly = !txtboxClientSecret.ReadOnly;
+            txtboxOAuthSecret.UseSystemPasswordChar = !txtboxOAuthSecret.UseSystemPasswordChar;
+            txtboxOAuthSecret.ReadOnly = !txtboxOAuthSecret.ReadOnly;
         }
 
-        private void btnHideRedirectURL_Click(object sender, EventArgs e)
+        private void BtnHideRedirectURL_Click(object sender, EventArgs e)
         {
-            txtboxRedirectURL.UseSystemPasswordChar = !txtboxRedirectURL.UseSystemPasswordChar;
-            txtboxRedirectURL.ReadOnly = !txtboxRedirectURL.ReadOnly;
+            txtboxOAuthRedirectURL.UseSystemPasswordChar = !txtboxOAuthRedirectURL.UseSystemPasswordChar;
+            txtboxOAuthRedirectURL.ReadOnly = !txtboxOAuthRedirectURL.ReadOnly;
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+        private void BtnSave_Click(object sender, EventArgs e)
         {
-            configSettings.ClientID = txtboxClientID.Text;
-            configSettings.ClientSecret = txtboxClientSecret.Text;
-            configSettings.RedirectUri = txtboxRedirectURL.Text;
-            configSettings.AuthorizationEndpoint = txtboxAuthorisationEndpoint.Text;
-            configSettings.TokenEndpoint = txtboxTokenEndpoint.Text;
-            configSettings.ScopeChannelModerator = chkScopesChannelModerate.Checked;
-            configSettings.ScopeChatEdit = chkScopesChatEdit.Checked;
-            configSettings.ScopeChatRead = chkScopesChatRead.Checked;
-            configSettings.ScopeModeratorReadChatters = chkScopesModeratorReadChatters.Checked;
+            configSettings.OAuthClientID = txtboxOAthClientID.Text;
+            configSettings.OAuthClientSecret = txtboxOAuthSecret.Text;
+            configSettings.OAuthRedirectUri = txtboxOAuthRedirectURL.Text;
+            configSettings.OAuthAuthorizationEndpoint = txtboxOAuthAuthorisationEndpoint.Text;
+            configSettings.OAuthTokenEndpoint = txtboxOAuthTokenEndpoint.Text;
+            configSettings.OAuthScopeChannelModerator = chkOAuthScopeChannelModerate.Checked;
+            configSettings.OAuthScopeChatEdit = chkOAuthScopeChatEdit.Checked;
+            configSettings.OAuthScopeChatRead = chkOAuthScopeChatRead.Checked;
+            configSettings.OAuthScopeModeratorReadChatters = chkOAuthScopeModeratorReadChatters.Checked;
+            configSettings.IRCIP = txtboxIRCIP.Text;
+            configSettings.IRCHost = txtboxIRCHost.Text;
+            configSettings.IRCPort = int.Parse(txtboxIRCPort.Text);
+            configSettings.IRCNick = txtboxIRCNick.Text;
+            configSettings.IRCChannel = txtboxIRCChannel.Text;
             ConfigurationManager.WriteConfiguration(configSettings);
 
             Close();
         }
 
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void BtnCancel_Click(object sender, EventArgs e)
         {
             Close();
         }

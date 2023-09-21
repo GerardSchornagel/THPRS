@@ -1,10 +1,7 @@
 ﻿using System;
-using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Newtonsoft.Json;
-using THPRS;
 
 namespace THPRS
 {
@@ -27,16 +24,25 @@ namespace THPRS
                 Company = companyAttribute.Company,
                 Product = productAttribute.Product,
                 Version = versionAttribute.Version,
-                InternetAvailability = false,
-                ClientID = "3l7g2z9rmbpcbwbp48k1ti0lm8e3x5",
-                ClientSecret = "7i5i6fc8w2td6x83r6gsc00f89s3zi",
-                RedirectUri = "http://localhost:3000",
-                AuthorizationEndpoint = "https://id.twitch.tv/oauth2/authorize",
-                TokenEndpoint = "https://id.twitch.tv/oauth2/token",
-                ScopeChannelModerator = false,
-                ScopeChatEdit = true,
-                ScopeChatRead = true,
-                ScopeModeratorReadChatters = false
+                StartupInternetAvailability = false,
+                OAuthClientID = "3l7g2z9rmbpcbwbp48k1ti0lm8e3x5",
+                OAuthClientSecret = "7i5i6fc8w2td6x83r6gsc00f89s3zi",
+                OAuthRedirectUri = "http://localhost:3000",
+                OAuthAuthorizationEndpoint = "https://id.twitch.tv/oauth2/authorize",
+                OAuthTokenEndpoint = "https://id.twitch.tv/oauth2/token",
+                OAuthScopeChannelModerator = false,
+                OAuthScopeChatEdit = true,
+                OAuthScopeChatRead = true,
+                OAuthScopeModeratorReadChatters = false,
+                IRCIP = "irc.chat.twitch.tv",
+                IRCHost = "tmi.chat.tv",
+                IRCPort = 6667,
+                IRCNick = "feanoir85",
+                IRCChannel = "feanoir85",
+                AuthorizationCode = "",
+                TokenCode = "",
+                TokenRefresh = "",
+                TokenExpiresAt = DateTime.Now
             };
             return config;
         }
@@ -44,14 +50,14 @@ namespace THPRS
         public static void WriteConfiguration(Configuration config, string file = "config.json")
         {
             string jsonString = JsonConvert.SerializeObject(config, Formatting.Indented);
-            File.WriteAllText(file, jsonString);
+            System.IO.File.WriteAllText(file, jsonString);
         }
 
         public static Configuration ReadConfiguration(string file = "config.json")
         {
-            if (File.Exists(file))
+            if (System.IO.File.Exists(file))
             {
-                string jsonString = File.ReadAllText(file);
+                string jsonString = System.IO.File.ReadAllText(file);
                 Configuration config = JsonConvert.DeserializeObject<Configuration>(jsonString);
                 if (config.Company != companyAttribute.Company)
                 {
@@ -86,19 +92,33 @@ namespace THPRS
 
     class Configuration
     {
+        // Version Checking
         public string Company { get; set; }
         public string Product { get; set; }
         public string Version { get; set; }
-        public bool InternetAvailability { get; set; }
-        public string ClientID { get; set; }
-        public string ClientSecret { get; set; }
-        public string RedirectUri { get; set; }
-        public string AuthorizationEndpoint { get; set; }
-        public string AuthorizationScope { get; set; }
-        public string TokenEndpoint { get; set; }
-        public bool ScopeChannelModerator { get; set; }
-        public bool ScopeChatEdit { get; set; }
-        public bool ScopeChatRead { get; set; }
-        public bool ScopeModeratorReadChatters { get; set; }
+        // Startup
+        public bool StartupInternetAvailability { get; set; }
+        // OAuth Settings
+        public string OAuthClientID { get; set; }
+        public string OAuthClientSecret { get; set; }
+        public string OAuthRedirectUri { get; set; }
+        public string OAuthAuthorizationEndpoint { get; set; }
+        public string OAuthAuthorizationScope { get; set; }
+        public string OAuthTokenEndpoint { get; set; }
+        public bool OAuthScopeChannelModerator { get; set; }
+        public bool OAuthScopeChatEdit { get; set; }
+        public bool OAuthScopeChatRead { get; set; }
+        public bool OAuthScopeModeratorReadChatters { get; set; }
+        // IRC Settings
+        public string IRCIP { get; set; }
+        public string IRCHost { get; set; }
+        public int IRCPort { get; set; }
+        public string IRCNick { get; set; }
+        public string IRCChannel { get; set; }
+        // Connection Information
+        public string AuthorizationCode { get; set; }
+        public string TokenCode { get; set; }
+        public string TokenRefresh { get; set; }
+        public DateTime TokenExpiresAt { get; set; }
     }
 }
