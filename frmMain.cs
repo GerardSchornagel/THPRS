@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security.Authentication.ExtendedProtection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -15,11 +16,14 @@ namespace THPRS
         internal static Configuration config;
 
         static string listenerFunction = "IDLE";
-        Queue<string> queueIRC = new Queue<string>();
+        Queue<string> queueIRCIn = new Queue<string>();
+        Queue<IRCMessage> queueIRCOut = new Queue<IRCMessage>();
 
         public TcpClient tcpIRC;
         public StreamReader readerIRC;
         public StreamWriter writerIRC;
+
+        string header = $"PRIVMSG #{config.IRCChannel} :";
 
         public frmMain()
         {
@@ -98,7 +102,8 @@ namespace THPRS
 
             listenerFunction = "IDLE";
             ListenerIRC();
-            QueueParser();
+            QueueParserIn();
+            QueueParserOut();
         }
 
         private void MenuOptionsSettings_Click(object sender, EventArgs e)
@@ -109,14 +114,21 @@ namespace THPRS
 
         private void MenuFileExit_Click(object sender, EventArgs e)
         {
-            try { writerIRC.WriteLine($"PART #{config.IRCChannel}"); writerIRC.Flush(); } catch (Exception) { }
-            Thread.Sleep(250);
-            try { tcpIRC.Close(); } catch (Exception) { }
-            Thread.Sleep(250);
-            try { readerIRC.Close(); } catch (Exception) { }
-            try { writerIRC.Close(); } catch (Exception) { }
-            Thread.Sleep(250);
-            Close();
+            if (queueIRCOut.Count > 0)
+            {
+                Task.Delay(5500);
+            }
+            else
+            {
+                try { writerIRC.WriteLine($"PART #{config.IRCChannel}"); writerIRC.Flush(); } catch (Exception) { }
+                Thread.Sleep(250);
+                try { tcpIRC.Close(); } catch (Exception) { }
+                Thread.Sleep(250);
+                try { readerIRC.Close(); } catch (Exception) { }
+                try { writerIRC.Close(); } catch (Exception) { }
+                Thread.Sleep(250);
+                Close();
+            }
         }
 
         private void MenuFileDefault_Click(object sender, EventArgs e)
@@ -165,11 +177,10 @@ namespace THPRS
 
         async Task ListenerIRC()
         {
-            string channel = config.IRCChannel;
 
             await writerIRC.WriteLineAsync($"PASS oauth:{config.TokenCode}");
             await writerIRC.WriteLineAsync($"NICK {config.IRCNick}");
-            await writerIRC.WriteLineAsync($"JOIN #{channel}");
+            await writerIRC.WriteLineAsync($"JOIN #{config.IRCChannel}");
 
             while (true)
             {
@@ -189,16 +200,15 @@ namespace THPRS
                     }
                     else
                     {
-                        queueIRC.Enqueue(line);
+                        queueIRCIn.Enqueue(line);
                     }
                 }
                 else { continue; }
             }
         }
 
-        async Task QueueParser()
+        async Task QueueParserIn()
         {
-            string channel = config.IRCChannel;
             string line = "";
             string msg = "";
             string name = "";
@@ -211,27 +221,27 @@ namespace THPRS
                     case "IDLE":
                         break;
                     case "EXIT":
-                        await writerIRC.WriteLineAsync($"PART #{channel}");
+                        AddMessage($"PART #{config.IRCChannel}", "CUSTOM");
                         tcpIRC.Close();
                         readerIRC.Close();
                         writerIRC.Close();
                         break;
                     case "KEYWORD_STOP":
                         listenerFunction = "IDLE";
-                        await writerIRC.WriteLineAsync($"PRIVMSG #{channel} :--STOPPED LISTENING--");
+                        AddMessage("STOPPED LISTENING", "SYSTEM");
                         break;
                     default:
                         break;
                 }
 
                 // No queue = skip all after 0.5s pause
-                if (queueIRC.Count == 0)
+                if (queueIRCIn.Count == 0)
                 {
                     await Task.Delay(500);
                     continue;
                 }
 
-                line = queueIRC.Dequeue();
+                line = queueIRCIn.Dequeue();
                 txtboxLog.Text += line + "\r\n";
 
                 // Functions for incoming lines.
@@ -246,9 +256,58 @@ namespace THPRS
                             if (chklistParticipants.Items.Contains(name) == false)
                             {
                                 chklistParticipants.Items.Add(name, true);
-                                await writerIRC.WriteLineAsync($"PRIVMSG #{channel} :@{name} you're in!");
+
+                                AddMessage("", "KEYWORDCONFIRM", name);
                             }
                         }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        async Task QueueParserOut() //include concat on entering to optimze message/minute
+        {
+            await Task.Delay(5000); // 60s/12msg = 5s
+
+            string nameConcat = "";
+
+            IRCMessage message;
+
+            while (queueIRCOut.Count != 0)
+            {
+                message = queueIRCOut.Dequeue();
+
+                switch (message.category)
+                {
+                    case "PRIVMSG":
+                        await writerIRC.WriteLineAsync($"{header}{message.content}");
+                        break;
+                    case "KEYWORDCONFIRM":
+                        if ((queueIRCOut.Peek()).category == "KEYWORDCONFIRM")
+                        {
+                            nameConcat += $"{message.parameter}, ";
+                        }
+                        else
+                        {
+                            if (nameConcat.Length > 1)
+                            {
+                                await writerIRC.WriteLineAsync($"{header}{nameConcat}, {message.parameter} have all entered the giveaway. Good Luck.");
+                                nameConcat = "";
+                            }
+                            else
+                            {
+                                await writerIRC.WriteLineAsync($"{header}{message.parameter}, you've entered the giveaway.");
+                                nameConcat = "";
+                            }
+                        }
+                        break;
+                    case "SYSTEM":
+                        await writerIRC.WriteLineAsync($"{header}⫸⫸⫸{message.content}⫷⫷⫷");
+                        break;
+                    case "CUSTOM":
+                        await writerIRC.WriteLineAsync(message.content);
                         break;
                     default:
                         break;
@@ -277,7 +336,7 @@ namespace THPRS
                 if (winners.Contains(winner) == false)
                 {
                     winners[i] = winner;
-                    writerIRC.WriteLineAsync($"PRIVMSG #{config.IRCChannel} :@{winner} has been drawn as #{i + 1}");
+                    AddMessage($"Congratz @{winner}! You've been drawn as #{i + 1}, please use !ign to provide a character name. <3", "PRIVMSG");
                 }
                 else { i--; }
             }
@@ -287,7 +346,7 @@ namespace THPRS
         {
             if (e.KeyValue == 13)
             {
-                writerIRC.WriteLineAsync(toolDevSend.Text);
+                AddMessage(toolDevSend.Text, "CUSTOM");
                 toolDevSend.Text = $"PRIVMSG #{config.IRCChannel} :";
             }
         }
@@ -329,5 +388,21 @@ namespace THPRS
                 statusConnection.ForeColor = System.Drawing.Color.Red;
             }
         }
+
+        public void AddMessage(string content = null, string category = null, string parameter = null)
+        {
+            IRCMessage messageNew = new IRCMessage();
+            messageNew.content = content;
+            messageNew.category = category;
+            messageNew.parameter = parameter;
+            queueIRCOut.Enqueue(messageNew);
+        }
+    }
+
+    class IRCMessage
+    {
+        public string content;
+        public string category;
+        public string parameter;
     }
 }
