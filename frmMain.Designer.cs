@@ -60,6 +60,8 @@
             this.tmrStatusbar = new System.Windows.Forms.Timer(this.components);
             this.lblReceivers = new System.Windows.Forms.Label();
             this.nudReceivers = new System.Windows.Forms.NumericUpDown();
+            this.tmrIRCParser = new System.Windows.Forms.Timer(this.components);
+            this.txtboxOut = new System.Windows.Forms.TextBox();
             this.statusBar.SuspendLayout();
             this.menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudReceivers)).BeginInit();
@@ -233,11 +235,11 @@
             // 
             // txtboxLog
             // 
-            this.txtboxLog.Location = new System.Drawing.Point(208, 266);
+            this.txtboxLog.Location = new System.Drawing.Point(208, 292);
             this.txtboxLog.Multiline = true;
             this.txtboxLog.Name = "txtboxLog";
             this.txtboxLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtboxLog.Size = new System.Drawing.Size(446, 195);
+            this.txtboxLog.Size = new System.Drawing.Size(446, 169);
             this.txtboxLog.TabIndex = 9;
             // 
             // toolDevSend
@@ -311,6 +313,20 @@
             this.nudReceivers.Size = new System.Drawing.Size(62, 20);
             this.nudReceivers.TabIndex = 12;
             // 
+            // tmrIRCParser
+            // 
+            this.tmrIRCParser.Interval = 5000;
+            this.tmrIRCParser.Tick += new System.EventHandler(this.TimerIRCParser_Tick);
+            // 
+            // txtboxOut
+            // 
+            this.txtboxOut.Location = new System.Drawing.Point(207, 105);
+            this.txtboxOut.Multiline = true;
+            this.txtboxOut.Name = "txtboxOut";
+            this.txtboxOut.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.txtboxOut.Size = new System.Drawing.Size(446, 181);
+            this.txtboxOut.TabIndex = 9;
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -322,6 +338,7 @@
             this.Controls.Add(this.btnIDLE);
             this.Controls.Add(this.btnKeywordStart);
             this.Controls.Add(this.toolDevSend);
+            this.Controls.Add(this.txtboxOut);
             this.Controls.Add(this.txtboxLog);
             this.Controls.Add(this.btnDraw);
             this.Controls.Add(this.btnParticipantsClear);
@@ -377,6 +394,8 @@
         private System.Windows.Forms.Timer tmrStatusbar;
         private System.Windows.Forms.Label lblReceivers;
         private System.Windows.Forms.NumericUpDown nudReceivers;
+        private System.Windows.Forms.Timer tmrIRCParser;
+        private System.Windows.Forms.TextBox txtboxOut;
     }
 }
 

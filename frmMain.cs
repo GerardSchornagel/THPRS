@@ -23,8 +23,6 @@ namespace THPRS
         public StreamReader readerIRC;
         public StreamWriter writerIRC;
 
-        string header = $"PRIVMSG #{config.IRCChannel} :";
-
         public frmMain()
         {
             InitializeComponent();
@@ -103,7 +101,7 @@ namespace THPRS
             listenerFunction = "IDLE";
             ListenerIRC();
             QueueParserIn();
-            QueueParserOut();
+            tmrIRCParser.Enabled = true;
         }
 
         private void MenuOptionsSettings_Click(object sender, EventArgs e)
@@ -221,10 +219,12 @@ namespace THPRS
                     case "IDLE":
                         break;
                     case "EXIT":
-                        AddMessage($"PART #{config.IRCChannel}", "CUSTOM");
+                        writerIRC.WriteLine($"PART #{config.IRCChannel}", "CUSTOM");
                         tcpIRC.Close();
                         readerIRC.Close();
                         writerIRC.Close();
+                        break;
+                    case "KEYWORD_START":
                         break;
                     case "KEYWORD_STOP":
                         listenerFunction = "IDLE";
@@ -260,54 +260,6 @@ namespace THPRS
                                 AddMessage("", "KEYWORDCONFIRM", name);
                             }
                         }
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        async Task QueueParserOut() //include concat on entering to optimze message/minute
-        {
-            await Task.Delay(5000); // 60s/12msg = 5s
-
-            string nameConcat = "";
-
-            IRCMessage message;
-
-            while (queueIRCOut.Count != 0)
-            {
-                message = queueIRCOut.Dequeue();
-
-                switch (message.category)
-                {
-                    case "PRIVMSG":
-                        await writerIRC.WriteLineAsync($"{header}{message.content}");
-                        break;
-                    case "KEYWORDCONFIRM":
-                        if ((queueIRCOut.Peek()).category == "KEYWORDCONFIRM")
-                        {
-                            nameConcat += $"{message.parameter}, ";
-                        }
-                        else
-                        {
-                            if (nameConcat.Length > 1)
-                            {
-                                await writerIRC.WriteLineAsync($"{header}{nameConcat}, {message.parameter} have all entered the giveaway. Good Luck.");
-                                nameConcat = "";
-                            }
-                            else
-                            {
-                                await writerIRC.WriteLineAsync($"{header}{message.parameter}, you've entered the giveaway.");
-                                nameConcat = "";
-                            }
-                        }
-                        break;
-                    case "SYSTEM":
-                        await writerIRC.WriteLineAsync($"{header}⫸⫸⫸{message.content}⫷⫷⫷");
-                        break;
-                    case "CUSTOM":
-                        await writerIRC.WriteLineAsync(message.content);
                         break;
                     default:
                         break;
@@ -359,6 +311,7 @@ namespace THPRS
         private void BtnKeywordStart_Click(object sender, EventArgs e)
         {
             listenerFunction = "KEYWORD_START";
+            AddMessage("STARTED LISTENING","SYSTEM");
         }
 
         private void BtnIDLE_Click(object sender, EventArgs e)
@@ -396,6 +349,62 @@ namespace THPRS
             messageNew.category = category;
             messageNew.parameter = parameter;
             queueIRCOut.Enqueue(messageNew);
+        }
+
+        private void TimerIRCParser_Tick(object sender, EventArgs e)
+        {
+            // 60s/12msg = 5s
+            IRCMessage message;
+            string nameConcat = "";
+            int nameConcatSum = 0;
+
+            if (queueIRCOut.Count != 0)
+            {
+                Queue<IRCMessage> queueRun = new Queue<IRCMessage>(queueIRCOut);
+                queueIRCOut.Clear();
+
+                while (queueRun.Count != 0)
+                {
+                    message = queueRun.Dequeue();
+
+                    switch (message.category)
+                    {
+                        case "PRIVMSG":
+                            //writerIRC.WriteLine($"PRIVMSG #{config.IRCChannel} :{message.content}");
+                            txtboxOut.Text += $"PRIVMSG #{config.IRCChannel} :{message.content}" + "\r\n";
+                            break;
+                        case "KEYWORDCONFIRM":
+                            nameConcat += $"{message.parameter}, ";
+                            nameConcatSum += 1;
+                            break;
+                        case "SYSTEM":
+                            //writerIRC.WriteLine($"PRIVMSG #{config.IRCChannel} :/me {message.content}");
+                            txtboxOut.Text += $"PRIVMSG #{config.IRCChannel} :/me {message.content}" + "\r\n";
+                            break;
+                        case "CUSTOM":
+                            //writerIRC.WriteLine(message.content);
+                            txtboxOut.Text += message.content + "\r\n";
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                // Write out the Concatation of entered names
+                if (nameConcat != "")
+                {
+                    if (nameConcatSum > 6)
+                    {
+                        //writerIRC.WriteLine($"PRIVMSG #{config.IRCChannel} :{nameConcat}entered the Giveaway");
+                        txtboxOut.Text += $"PRIVMSG #{config.IRCChannel} :{nameConcat}entered the Giveaway" + "\r\n";
+
+                    }
+                    else
+                    {
+                        //writerIRC.WriteLine($"PRIVMSG #{config.IRCChannel} :{nameConcatSum} chatters entered the Giveaway");
+                        txtboxOut.Text += $"PRIVMSG #{config.IRCChannel} :{nameConcatSum} chatters entered the Giveaway" + "\r\n";
+                    }
+                }
+            }
         }
     }
 
