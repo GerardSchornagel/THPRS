@@ -294,34 +294,20 @@ namespace THPRS
             }
         }
 
-        private void ToolDevSend_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.KeyValue == 13)
-            {
-                AddMessage(toolDevSend.Text, "CUSTOM");
-                toolDevSend.Text = $"PRIVMSG #{config.IRCChannel} :";
-            }
-        }
-
         private void BtnKeywordStop_Click(object sender, EventArgs e)
         {
+            tmrRuntime.Stop();
             listenerFunction = "KEYWORD_STOP";
         }
 
         private void BtnKeywordStart_Click(object sender, EventArgs e)
         {
             listenerFunction = "KEYWORD_START";
+            if (nudRuntime.Value != 0)
+            {
+                tmrRuntime.Start();
+            }
             AddMessage("STARTED LISTENING","SYSTEM");
-        }
-
-        private void BtnIDLE_Click(object sender, EventArgs e)
-        {
-            listenerFunction = "IDLE";
-        }
-
-        private void BtnEXIT_Click(object sender, EventArgs e)
-        {
-            listenerFunction = "EXIT";
         }
 
         private void TmrStatusbar_Tick(object sender, EventArgs e)
@@ -404,6 +390,18 @@ namespace THPRS
                         txtboxOut.Text += $"PRIVMSG #{config.IRCChannel} :{nameConcatSum} chatters entered the Giveaway" + "\r\n";
                     }
                 }
+            }
+        }
+
+        private void tmrRuntime_Tick(object sender, EventArgs e)
+        {
+            if (nudRuntime.Value != 0)
+            {
+                nudRuntime.Value -= 1;
+            } else {
+                tmrRuntime.Stop();
+                listenerFunction = "KEYWORD_STOP";
+                btnDraw.Select();
             }
         }
     }

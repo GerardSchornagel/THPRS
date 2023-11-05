@@ -52,19 +52,20 @@
             this.btnParticipantsClear = new System.Windows.Forms.Button();
             this.btnDraw = new System.Windows.Forms.Button();
             this.txtboxLog = new System.Windows.Forms.TextBox();
-            this.toolDevSend = new System.Windows.Forms.TextBox();
             this.btnKeywordStart = new System.Windows.Forms.Button();
             this.btnKeywordStop = new System.Windows.Forms.Button();
-            this.btnIDLE = new System.Windows.Forms.Button();
-            this.btnEXIT = new System.Windows.Forms.Button();
             this.tmrStatusbar = new System.Windows.Forms.Timer(this.components);
             this.lblReceivers = new System.Windows.Forms.Label();
             this.nudReceivers = new System.Windows.Forms.NumericUpDown();
             this.tmrIRCParser = new System.Windows.Forms.Timer(this.components);
             this.txtboxOut = new System.Windows.Forms.TextBox();
+            this.lblRuntime = new System.Windows.Forms.Label();
+            this.nudRuntime = new System.Windows.Forms.NumericUpDown();
+            this.tmrRuntime = new System.Windows.Forms.Timer(this.components);
             this.statusBar.SuspendLayout();
             this.menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudReceivers)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudRuntime)).BeginInit();
             this.SuspendLayout();
             // 
             // statusBar
@@ -74,7 +75,7 @@
             this.statusLabel});
             this.statusBar.Location = new System.Drawing.Point(0, 516);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(666, 22);
+            this.statusBar.Size = new System.Drawing.Size(917, 22);
             this.statusBar.TabIndex = 0;
             this.statusBar.Text = "Statusbar";
             // 
@@ -105,7 +106,7 @@
             this.aboutToolStripMenuItem});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new System.Drawing.Size(666, 24);
+            this.menuStrip.Size = new System.Drawing.Size(917, 24);
             this.menuStrip.TabIndex = 2;
             this.menuStrip.Text = "menustrip";
             // 
@@ -235,27 +236,18 @@
             // 
             // txtboxLog
             // 
-            this.txtboxLog.Location = new System.Drawing.Point(208, 292);
+            this.txtboxLog.Location = new System.Drawing.Point(190, 315);
             this.txtboxLog.Multiline = true;
             this.txtboxLog.Name = "txtboxLog";
             this.txtboxLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtboxLog.Size = new System.Drawing.Size(446, 169);
             this.txtboxLog.TabIndex = 9;
             // 
-            // toolDevSend
-            // 
-            this.toolDevSend.Location = new System.Drawing.Point(208, 470);
-            this.toolDevSend.Name = "toolDevSend";
-            this.toolDevSend.Size = new System.Drawing.Size(445, 20);
-            this.toolDevSend.TabIndex = 10;
-            this.toolDevSend.Text = "PRIVMSG #feanoir85 :";
-            this.toolDevSend.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ToolDevSend_KeyUp);
-            // 
             // btnKeywordStart
             // 
-            this.btnKeywordStart.Location = new System.Drawing.Point(303, 44);
+            this.btnKeywordStart.Location = new System.Drawing.Point(347, 28);
             this.btnKeywordStart.Name = "btnKeywordStart";
-            this.btnKeywordStart.Size = new System.Drawing.Size(172, 26);
+            this.btnKeywordStart.Size = new System.Drawing.Size(128, 37);
             this.btnKeywordStart.TabIndex = 11;
             this.btnKeywordStart.Text = "KEYWORD_START";
             this.btnKeywordStart.UseVisualStyleBackColor = true;
@@ -263,33 +255,13 @@
             // 
             // btnKeywordStop
             // 
-            this.btnKeywordStop.Location = new System.Drawing.Point(303, 76);
+            this.btnKeywordStop.Location = new System.Drawing.Point(481, 27);
             this.btnKeywordStop.Name = "btnKeywordStop";
-            this.btnKeywordStop.Size = new System.Drawing.Size(172, 23);
+            this.btnKeywordStop.Size = new System.Drawing.Size(128, 38);
             this.btnKeywordStop.TabIndex = 11;
             this.btnKeywordStop.Text = "KEYWORD_STOP";
             this.btnKeywordStop.UseVisualStyleBackColor = true;
             this.btnKeywordStop.Click += new System.EventHandler(this.BtnKeywordStop_Click);
-            // 
-            // btnIDLE
-            // 
-            this.btnIDLE.Location = new System.Drawing.Point(481, 44);
-            this.btnIDLE.Name = "btnIDLE";
-            this.btnIDLE.Size = new System.Drawing.Size(172, 26);
-            this.btnIDLE.TabIndex = 11;
-            this.btnIDLE.Text = "IDLE";
-            this.btnIDLE.UseVisualStyleBackColor = true;
-            this.btnIDLE.Click += new System.EventHandler(this.BtnIDLE_Click);
-            // 
-            // btnEXIT
-            // 
-            this.btnEXIT.Location = new System.Drawing.Point(481, 76);
-            this.btnEXIT.Name = "btnEXIT";
-            this.btnEXIT.Size = new System.Drawing.Size(172, 23);
-            this.btnEXIT.TabIndex = 11;
-            this.btnEXIT.Text = "EXIT";
-            this.btnEXIT.UseVisualStyleBackColor = true;
-            this.btnEXIT.Click += new System.EventHandler(this.BtnEXIT_Click);
             // 
             // tmrStatusbar
             // 
@@ -320,28 +292,48 @@
             // 
             // txtboxOut
             // 
-            this.txtboxOut.Location = new System.Drawing.Point(207, 105);
+            this.txtboxOut.Location = new System.Drawing.Point(189, 128);
             this.txtboxOut.Multiline = true;
             this.txtboxOut.Name = "txtboxOut";
             this.txtboxOut.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtboxOut.Size = new System.Drawing.Size(446, 181);
             this.txtboxOut.TabIndex = 9;
             // 
+            // lblRuntime
+            // 
+            this.lblRuntime.AutoSize = true;
+            this.lblRuntime.Location = new System.Drawing.Point(187, 28);
+            this.lblRuntime.Name = "lblRuntime";
+            this.lblRuntime.Size = new System.Drawing.Size(154, 13);
+            this.lblRuntime.TabIndex = 5;
+            this.lblRuntime.Text = "Runtime in seconds (0=infinite))";
+            // 
+            // nudRuntime
+            // 
+            this.nudRuntime.Location = new System.Drawing.Point(190, 45);
+            this.nudRuntime.Name = "nudRuntime";
+            this.nudRuntime.Size = new System.Drawing.Size(151, 20);
+            this.nudRuntime.TabIndex = 12;
+            // 
+            // tmrRuntime
+            // 
+            this.tmrRuntime.Interval = 1000;
+            this.tmrRuntime.Tick += new System.EventHandler(this.tmrRuntime_Tick);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(666, 538);
+            this.ClientSize = new System.Drawing.Size(917, 538);
+            this.Controls.Add(this.nudRuntime);
             this.Controls.Add(this.nudReceivers);
-            this.Controls.Add(this.btnEXIT);
             this.Controls.Add(this.btnKeywordStop);
-            this.Controls.Add(this.btnIDLE);
             this.Controls.Add(this.btnKeywordStart);
-            this.Controls.Add(this.toolDevSend);
             this.Controls.Add(this.txtboxOut);
             this.Controls.Add(this.txtboxLog);
             this.Controls.Add(this.btnDraw);
             this.Controls.Add(this.btnParticipantsClear);
+            this.Controls.Add(this.lblRuntime);
             this.Controls.Add(this.chklistParticipants);
             this.Controls.Add(this.lblReceivers);
             this.Controls.Add(this.lblTriggerword);
@@ -357,6 +349,7 @@
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudReceivers)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudRuntime)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -386,16 +379,16 @@
         private System.Windows.Forms.Button btnParticipantsClear;
         private System.Windows.Forms.Button btnDraw;
         private System.Windows.Forms.TextBox txtboxLog;
-        private System.Windows.Forms.TextBox toolDevSend;
         private System.Windows.Forms.Button btnKeywordStart;
         private System.Windows.Forms.Button btnKeywordStop;
-        private System.Windows.Forms.Button btnIDLE;
-        private System.Windows.Forms.Button btnEXIT;
         private System.Windows.Forms.Timer tmrStatusbar;
         private System.Windows.Forms.Label lblReceivers;
         private System.Windows.Forms.NumericUpDown nudReceivers;
         private System.Windows.Forms.Timer tmrIRCParser;
         private System.Windows.Forms.TextBox txtboxOut;
+        private System.Windows.Forms.Label lblRuntime;
+        private System.Windows.Forms.NumericUpDown nudRuntime;
+        private System.Windows.Forms.Timer tmrRuntime;
     }
 }
 
